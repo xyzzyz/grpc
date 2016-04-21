@@ -38,6 +38,7 @@ import threading  # pylint: disable=unused-import
 from grpc._adapter import _intermediary_low
 from grpc._adapter import _low
 from grpc._adapter import _types
+from grpc.beta import _auth
 from grpc.beta import _connectivity_channel
 from grpc.beta import _server
 from grpc.beta import _stub
@@ -93,7 +94,6 @@ class CallCredentials(object):
   def __init__(self, low_credentials):
     self._low_credentials = low_credentials
 
-
 def metadata_call_credentials(metadata_plugin, name=None):
   """Construct CallCredentials from an interfaces.GRPCAuthMetadataPlugin.
 
@@ -105,9 +105,32 @@ def metadata_call_credentials(metadata_plugin, name=None):
     A CallCredentials object for use in a GRPCCallOptions object.
   """
   if name is None:
-    name = metadata_plugin.__name__
+    name = metadata_plugin.__class__.__name__
   return CallCredentials(
       _low.call_credentials_metadata_plugin(metadata_plugin, name))
+
+def google_call_credentials(credentials):
+  """Construct CallCredentials from google credentials
+
+  Args:
+    credentials: A google credentials object from oauth2client
+
+  Returns:
+    A CallCredentials object for header authentication
+  """
+  return metadata_call_credentials(_auth.GoogleCallCredentials(credentials))
+
+def access_token_call_credentials(access_token):
+  """Construct CallCredentials from a raw access token
+
+  Args:
+    access_token: A raw access token used for authentication
+
+  Returns:
+    A CallCredentials object for header authentication
+  """
+  return metadata_call_credentials(_auth.AccessTokenCallCredentials(access_token))
+
 
 def composite_call_credentials(call_credentials, additional_call_credentials):
   """Compose two CallCredentials to make a new one.

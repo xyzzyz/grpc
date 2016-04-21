@@ -1,4 +1,4 @@
-# Copyright 2016, Google Inc.
+# Copyright 2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,40 +27,43 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Tests the implementations module of the gRPC Python Beta API."""
+from concurrent.futures import ThreadPoolExecutor
 
-import unittest
+from grpc.beta import interfaces
 
-from grpc.beta import implementations
-from tests.unit import resources
+class GoogleCallCredentials(interfaces.GRPCAuthMetadataPlugin):
+  """ Metadata wrapper for googleCredentials from the oauth2client library
+  """
+  def __init__(self, credentials):
+    self._credentials = credentials
+    self._pool = ThreadPoolExecutor(max_workers=1)
 
-
-class ChannelCredentialsTest(unittest.TestCase):
-
-  def test_runtime_provided_root_certificates(self):
-    channel_credentials = implementations.ssl_channel_credentials()
-    self.assertIsInstance(
-        channel_credentials, implementations.ChannelCredentials)
+  def __call__(self, context, callback):
+    # MetadataPlugins cannot block (see grpc.beta.interfaces.py)
+    future = self._pool.submit(self._credentials.get_access_token)
+    future.add_done_callback(lambda x: self._get_token_callback(callback, x))
   
-  def test_application_provided_root_certificates(self):
-    channel_credentials = implementations.ssl_channel_credentials(
-        resources.test_root_certificates())
-    self.assertIsInstance(
-        channel_credentials, implementations.ChannelCredentials)
+  def _get_token_callback(self, callback, future):
+    access_token = None
+    error = None
+    try:
+      access_token = future.result().access_token
+    except Exception as e:
+      error = e
+    _sign_request(callback, access_token, error)
 
-class CallCredentialsTest(unittest.TestCase):
+  def __del__(self):
+    self._pool.shutdown(wait=False)
 
-  def test_google_call_credentials(self):
-    class MockGoogleCreds:
-      def get_access_token(self):
-        return {"access_token" : "token"}
+class AccessTokenCallCredentials(interfaces.GRPCAuthMetadataPlugin):
+  """ Metadata wrapper for raw access token credentials
+  """
+  def __init__(self, access_token):
+    self._access_token = access_token
 
-    call_creds = implementations.google_call_credentials(MockGoogleCreds())
-    self.assertIsInstance(call_creds, implementations.CallCredentials)
-    
-  def test_access_token_call_credentials(self):
-    call_creds = implementations.access_token_call_credentials("token")
-    self.assertIsInstance(call_creds, implementations.CallCredentials)
+  def __call__(self, context, callback):
+    _sign_request(callback, self._access_token, None)
 
-if __name__ == '__main__':
-  unittest.main(verbosity=2)
+def _sign_request(callback, token, error):
+  metadata = [('authorization', 'Bearer {}'.format(token))]
+  callback.__call__(metadata, error)
