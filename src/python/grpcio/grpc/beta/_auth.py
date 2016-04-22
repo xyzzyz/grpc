@@ -31,9 +31,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 from grpc.beta import interfaces
 
+
 class GoogleCallCredentials(interfaces.GRPCAuthMetadataPlugin):
-  """ Metadata wrapper for googleCredentials from the oauth2client library
-  """
+  """Metadata wrapper for googleCredentials from the oauth2client library"""
+
   def __init__(self, credentials):
     self._credentials = credentials
     self._pool = ThreadPoolExecutor(max_workers=1)
@@ -42,7 +43,7 @@ class GoogleCallCredentials(interfaces.GRPCAuthMetadataPlugin):
     # MetadataPlugins cannot block (see grpc.beta.interfaces.py)
     future = self._pool.submit(self._credentials.get_access_token)
     future.add_done_callback(lambda x: self._get_token_callback(callback, x))
-  
+ 
   def _get_token_callback(self, callback, future):
     access_token = None
     error = None
@@ -55,14 +56,16 @@ class GoogleCallCredentials(interfaces.GRPCAuthMetadataPlugin):
   def __del__(self):
     self._pool.shutdown(wait=False)
 
+
 class AccessTokenCallCredentials(interfaces.GRPCAuthMetadataPlugin):
-  """ Metadata wrapper for raw access token credentials
-  """
+  """Metadata wrapper for raw access token credentials"""
+
   def __init__(self, access_token):
     self._access_token = access_token
 
   def __call__(self, context, callback):
     _sign_request(callback, self._access_token, None)
+
 
 def _sign_request(callback, token, error):
   metadata = [('authorization', 'Bearer {}'.format(token))]
