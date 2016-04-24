@@ -1,4 +1,4 @@
-# Copyright 2015, Google Inc.
+# Copyright 2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,24 +26,30 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""GRPCAuthMetadataPlugins for standard authentication."""
 
-from concurrent.futures import ThreadPoolExecutor
+import concurrent.futures
 
 from grpc.beta import interfaces
 
 
+def _sign_request(callback, token, error):
+  metadata = [('authorization', 'Bearer {}'.format(token))]
+  callback(metadata, error)
+
+
 class GoogleCallCredentials(interfaces.GRPCAuthMetadataPlugin):
-  """Metadata wrapper for googleCredentials from the oauth2client library"""
+  """Metadata wrapper for googleCredentials from the oauth2client library."""
 
   def __init__(self, credentials):
     self._credentials = credentials
-    self._pool = ThreadPoolExecutor(max_workers=1)
+    self._pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
   def __call__(self, context, callback):
     # MetadataPlugins cannot block (see grpc.beta.interfaces.py)
     future = self._pool.submit(self._credentials.get_access_token)
     future.add_done_callback(lambda x: self._get_token_callback(callback, x))
- 
+
   def _get_token_callback(self, callback, future):
     access_token = None
     error = None
@@ -58,15 +64,10 @@ class GoogleCallCredentials(interfaces.GRPCAuthMetadataPlugin):
 
 
 class AccessTokenCallCredentials(interfaces.GRPCAuthMetadataPlugin):
-  """Metadata wrapper for raw access token credentials"""
+  """Metadata wrapper for raw access token credentials."""
 
   def __init__(self, access_token):
     self._access_token = access_token
 
   def __call__(self, context, callback):
     _sign_request(callback, self._access_token, None)
-
-
-def _sign_request(callback, token, error):
-  metadata = [('authorization', 'Bearer {}'.format(token))]
-  callback.__call__(metadata, error)

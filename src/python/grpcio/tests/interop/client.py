@@ -65,16 +65,17 @@ def _args():
       help='email address of the default service account', type=str)
   return parser.parse_args()
 
+
 def _stub(args):
   if args.test_case == 'oauth2_auth_token':
-    credentials = oauth2client_client.GoogleCredentials.get_application_default()
-    scoped_credentials = credentials.create_scoped([args.oauth_scope])
-    access_token = scoped_credentials.get_access_token().access_token
+    creds = oauth2client_client.GoogleCredentials.get_application_default()
+    scoped_creds = creds.create_scoped([args.oauth_scope])
+    access_token = scoped_creds.get_access_token().access_token
     call_creds = implementations.access_token_call_credentials(access_token)
   elif args.test_case == 'compute_engine_creds':
-    credentials = oauth2client_client.GoogleCredentials.get_application_default()
-    scoped_credentials = credentials.create_scoped([args.oauth_scope])
-    call_creds = implementations.google_call_credentials(scoped_credentials) 
+    creds = oauth2client_client.GoogleCredentials.get_application_default()
+    scoped_creds = creds.create_scoped([args.oauth_scope])
+    call_creds = implementations.google_call_credentials(scoped_creds)
   else:
     call_creds = None
   if args.use_tls:
@@ -84,10 +85,10 @@ def _stub(args):
       root_certificates = None  # will load default roots.
 
     channel_creds = implementations.ssl_channel_credentials(root_certificates)
-    if call_creds != None:
-        channel_creds = implementations.composite_channel_credentials(
-            channel_creds, call_creds)
-           
+    if call_creds is not None:
+      channel_creds = implementations.composite_channel_credentials(
+          channel_creds, call_creds)
+
     channel = test_utilities.not_really_secure_channel(
         args.server_host, args.server_port, channel_creds,
         args.server_host_override)
@@ -104,8 +105,7 @@ def _test_case_from_arg(test_case_arg):
   for test_case in methods.TestCase:
     if test_case_arg == test_case.value:
       return test_case
-  else:
-    raise ValueError('No test case "%s"!' % test_case_arg)
+  raise ValueError('No test case "%s"!' % test_case_arg)
 
 
 def test_interoperability():

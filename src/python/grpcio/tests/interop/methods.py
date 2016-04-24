@@ -39,14 +39,14 @@ import time
 
 from oauth2client import client as oauth2client_client
 
-from grpc.beta import interfaces, implementations
+from grpc.beta import implementations
+from grpc.beta import interfaces
 from grpc.framework.common import cardinality
 from grpc.framework.interfaces.face import face
 
 from tests.interop import empty_pb2
 from tests.interop import messages_pb2
 from tests.interop import test_pb2
-from tests.unit.beta import test_utilities
 
 _TIMEOUT = 7
 
@@ -90,13 +90,15 @@ class TestService(test_pb2.BetaTestServiceServicer):
     return self.FullDuplexCall(request_iterator, context)
 
 
-def _large_unary_common_behavior(stub, fill_username, fill_oauth_scope, protocol_options=None):
+def _large_unary_common_behavior(stub, fill_username, fill_oauth_scope,
+                                 protocol_options=None):
   with stub:
     request = messages_pb2.SimpleRequest(
         response_type=messages_pb2.COMPRESSABLE, response_size=314159,
         payload=messages_pb2.Payload(body=b'\x00' * 271828),
         fill_username=fill_username, fill_oauth_scope=fill_oauth_scope)
-    response_future = stub.UnaryCall.future(request, _TIMEOUT, protocol_options=protocol_options)
+    response_future = stub.UnaryCall.future(request, _TIMEOUT,
+                                            protocol_options=protocol_options)
     response = response_future.result()
     if response.payload.type is not messages_pb2.COMPRESSABLE:
       raise ValueError(
@@ -305,7 +307,8 @@ def _oauth2_auth_token(stub, args):
   if args.oauth_scope.find(response.oauth_scope) == -1:
     raise ValueError(
         'expected to find oauth scope "%s" in received "%s"' %
-            (response.oauth_scope, args.oauth_scope))
+        (response.oauth_scope, args.oauth_scope))
+
 
 def _per_rpc_creds(stub, args):
   json_key_filename = os.environ[
@@ -314,14 +317,14 @@ def _per_rpc_creds(stub, args):
   credentials = oauth2client_client.GoogleCredentials.get_application_default()
   scoped_credentials = credentials.create_scoped([args.oauth_scope])
   call_creds = implementations.google_call_credentials(scoped_credentials)
-  options = interfaces.grpc_call_options(disable_compression=False, credentials=call_creds)
-
-  response = _large_unary_common_behavior(stub, True, False, protocol_options=options)
+  options = interfaces.grpc_call_options(disable_compression=False,
+                                         credentials=call_creds)
+  response = _large_unary_common_behavior(stub, True, False,
+                                          protocol_options=options)
   if wanted_email != response.username:
     raise ValueError(
         'expected username %s, got %s' % (wanted_email, response.username))
-  
-  
+
 
 @enum.unique
 class TestCase(enum.Enum):
