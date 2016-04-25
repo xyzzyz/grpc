@@ -94,6 +94,7 @@ class CallCredentials(object):
   def __init__(self, low_credentials):
     self._low_credentials = low_credentials
 
+
 def metadata_call_credentials(metadata_plugin, name=None):
   """Construct CallCredentials from an interfaces.GRPCAuthMetadataPlugin.
 
