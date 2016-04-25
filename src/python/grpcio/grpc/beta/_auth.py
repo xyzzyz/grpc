@@ -34,7 +34,7 @@ from grpc.beta import interfaces
 
 
 def _sign_request(callback, token, error):
-  metadata = [('authorization', 'Bearer {}'.format(token))]
+  metadata = (('authorization', 'Bearer {}'.format(token)),)
   callback(metadata, error)
 
 

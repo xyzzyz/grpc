@@ -41,7 +41,7 @@ class GoogleCallCredentialsTest(unittest.TestCase):
     callback_event = threading.Event()
 
     def mock_callback(metadata, error):
-      self.assertEqual(metadata, [('authorization', 'Bearer token')])
+      self.assertEqual(metadata, (('authorization', 'Bearer token'),))
       self.assertIsNone(error)
       callback_event.set()
 
@@ -82,7 +82,7 @@ class AccessTokenCallCredentialsTest(unittest.TestCase):
     callback_event = threading.Event()
 
     def mock_callback(metadata, error):
-      self.assertEqual(metadata, [('authorization', 'Bearer token')])
+      self.assertEqual(metadata, (('authorization', 'Bearer token'),))
       self.assertIsNone(error)
       callback_event.set()
 
