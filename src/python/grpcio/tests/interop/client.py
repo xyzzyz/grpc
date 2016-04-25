@@ -92,8 +92,7 @@ def _stub(args):
     channel = test_utilities.not_really_secure_channel(
         args.server_host, args.server_port, channel_creds,
         args.server_host_override)
-    stub = test_pb2.beta_create_TestService_stub(
-        channel)
+    stub = test_pb2.beta_create_TestService_stub(channel)
   else:
     channel = implementations.insecure_channel(
         args.server_host, args.server_port)

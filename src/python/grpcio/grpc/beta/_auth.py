@@ -26,9 +26,10 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 """GRPCAuthMetadataPlugins for standard authentication."""
 
-import concurrent.futures
+from concurrent import futures
 
 from grpc.beta import interfaces
 
@@ -39,11 +40,11 @@ def _sign_request(callback, token, error):
 
 
 class GoogleCallCredentials(interfaces.GRPCAuthMetadataPlugin):
-  """Metadata wrapper for googleCredentials from the oauth2client library."""
+  """Metadata wrapper for GoogleCredentials from the oauth2client library."""
 
   def __init__(self, credentials):
     self._credentials = credentials
-    self._pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    self._pool = futures.ThreadPoolExecutor(max_workers=1)
 
   def __call__(self, context, callback):
     # MetadataPlugins cannot block (see grpc.beta.interfaces.py)
