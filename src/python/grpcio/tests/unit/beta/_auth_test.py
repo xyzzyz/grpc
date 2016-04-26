@@ -47,7 +47,7 @@ class MockGoogleCreds(object):
     return token
 
 
-class MockExcepitonGoogleCreds(object):
+class MockExceptionGoogleCreds(object):
 
   def get_access_token(self):
     raise Exception()
@@ -74,7 +74,7 @@ class GoogleCallCredentialsTest(unittest.TestCase):
       self.assertIsNotNone(error)
       callback_event.set()
 
-    call_creds = _auth.GoogleCallCredentials(MockExcepitonGoogleCreds())
+    call_creds = _auth.GoogleCallCredentials(MockExceptionGoogleCreds())
     call_creds(None, mock_callback)
     self.assertTrue(callback_event.wait(1.0))
 
