@@ -35,6 +35,24 @@ import unittest
 from grpc.beta import _auth
 
 
+class MockAccessTokenInfo(dict):
+  pass
+
+
+class MockGoogleCreds(object):
+
+  def get_access_token(self):
+    token = MockAccessTokenInfo()
+    token.access_token = 'token'
+    return token
+
+
+class MockExcepitonGoogleCreds(object):
+
+  def get_access_token(self):
+    raise Exception()
+
+
 class GoogleCallCredentialsTest(unittest.TestCase):
 
   def test_google_call_credentials_success(self):
@@ -44,16 +62,6 @@ class GoogleCallCredentialsTest(unittest.TestCase):
       self.assertEqual(metadata, (('authorization', 'Bearer token'),))
       self.assertIsNone(error)
       callback_event.set()
-
-    class MockAccessToken(dict):
-      pass
-
-    class MockGoogleCreds(object):
-
-      def get_access_token(self):
-        token = MockAccessToken()
-        token.access_token = 'token'
-        return token
 
     call_creds = _auth.GoogleCallCredentials(MockGoogleCreds())
     call_creds(None, mock_callback)
@@ -66,12 +74,7 @@ class GoogleCallCredentialsTest(unittest.TestCase):
       self.assertIsNotNone(error)
       callback_event.set()
 
-    class MockGoogleCreds(object):
-
-      def get_access_token(self):
-        raise Exception()
-
-    call_creds = _auth.GoogleCallCredentials(MockGoogleCreds())
+    call_creds = _auth.GoogleCallCredentials(MockExcepitonGoogleCreds())
     call_creds(None, mock_callback)
     self.assertTrue(callback_event.wait(1.0))
 

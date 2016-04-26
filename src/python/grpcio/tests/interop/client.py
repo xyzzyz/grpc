@@ -104,7 +104,8 @@ def _test_case_from_arg(test_case_arg):
   for test_case in methods.TestCase:
     if test_case_arg == test_case.value:
       return test_case
-  raise ValueError('No test case "%s"!' % test_case_arg)
+  else:
+    raise ValueError('No test case "%s"!' % test_case_arg)
 
 
 def test_interoperability():
