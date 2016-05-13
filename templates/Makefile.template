@@ -614,7 +614,7 @@
   endif
   else
   ifeq ($(HAS_EMBEDDED_PROTOBUF),true)
-  PROTOBUF_DEP = $(LIBDIR)/$(CONFIG)/protobuf/libprotobuf.a
+  PROTOBUF_DEP = $(LIBDIR)/$(CONFIG)/protobuf/all
   CPPFLAGS := -Ithird_party/protobuf/src $(CPPFLAGS)
   LDFLAGS := -L$(LIBDIR)/$(CONFIG)/protobuf $(LDFLAGS)
   PROTOC = $(BINDIR)/$(CONFIG)/protobuf/protoc
@@ -624,14 +624,17 @@
   endif
 
   LIBS_PROTOBUF = protobuf
+  LIBS_PROTOBUF_LITE = protobuf-lite
   LIBS_PROTOC = protoc protobuf
 
   HOST_LDLIBS_PROTOC += $(addprefix -l, $(LIBS_PROTOC))
 
   ifeq ($(PROTOBUF_PKG_CONFIG),true)
   LDLIBS_PROTOBUF += $(shell $(PKG_CONFIG) --libs-only-l protobuf)
+  LDLIBS_PROTOBUF_LITE += $(shell $(PKG_CONFIG) --libs-only-l protobuf-lite)
   else
   LDLIBS_PROTOBUF += $(addprefix -l, $(LIBS_PROTOBUF))
+  LDLIBS_PROTOBUF_LITE += $(addprefix -l, $(LIBS_PROTOBUF_LITE))
   endif
 
   # grpc++ .pc file
@@ -792,15 +795,18 @@
   	$(E) "[AUTOGEN] Preparing protobuf"
   	$(Q)(cd third_party/protobuf ; autoreconf -f -i -Wall,no-obsolete)
 
-  $(LIBDIR)/$(CONFIG)/protobuf/libprotobuf.a: third_party/protobuf/configure
+  third_party/protobuf/build: third_party/protobuf/configure
   	$(E) "[MAKE]    Building protobuf"
   	$(Q)(cd third_party/protobuf ; CC="$(CC)" CXX="$(CXX)" LDFLAGS="$(LDFLAGS_$(CONFIG)) -g $(PROTOBUF_LDFLAGS_EXTRA)" CPPFLAGS="$(PIC_CPPFLAGS) $(CPPFLAGS_$(CONFIG)) -g $(PROTOBUF_CPPFLAGS_EXTRA)" ./configure --disable-shared --enable-static)
   	$(Q)$(MAKE) -C third_party/protobuf clean
   	$(Q)$(MAKE) -C third_party/protobuf
+
+  $(LIBDIR)/$(CONFIG)/protobuf/all: third_party/protobuf/build
   	$(Q)mkdir -p $(LIBDIR)/$(CONFIG)/protobuf
   	$(Q)mkdir -p $(BINDIR)/$(CONFIG)/protobuf
-  	$(Q)cp third_party/protobuf/src/.libs/libprotoc.a $(LIBDIR)/$(CONFIG)/protobuf
   	$(Q)cp third_party/protobuf/src/.libs/libprotobuf.a $(LIBDIR)/$(CONFIG)/protobuf
+  	$(Q)cp third_party/protobuf/src/.libs/libprotobuf-lite.a $(LIBDIR)/$(CONFIG)/protobuf
+  	$(Q)cp third_party/protobuf/src/.libs/libprotoc.a $(LIBDIR)/$(CONFIG)/protobuf
   	$(Q)cp third_party/protobuf/src/protoc $(BINDIR)/$(CONFIG)/protobuf
 
   static: static_c static_cxx
@@ -1617,7 +1623,11 @@
       mingw_lib_deps = mingw_lib_deps + ' $(OPENSSL_DEP)'
 
     if lib.language == 'c++':
-      common = common + ' $(LDLIBSXX) $(LDLIBS_PROTOBUF)'
+      common = common + ' $(LDLIBSXX)'
+      if lib.get('protobuf', 'full') == 'full':
+        common = common + ' $(LDLIBS_PROTOBUF)'
+      elif lib.get('protobuf', 'full') == 'lite':
+        common = common + ' $(LDLIBS_PROTOBUF_LITE)'
 
     ldflags = '$(LDFLAGS)'
     if lib.get('LDFLAGS', None):

@@ -76,23 +76,8 @@
     <ClCompile Include="$(SolutionDir)\..\src\cpp\codegen\codegen_init.cc">
       <Filter>src\cpp\codegen</Filter>
     </ClCompile>
-    <ClCompile Include="$(SolutionDir)\..\src\cpp\client\secure_credentials.cc">
-      <Filter>src\cpp\client</Filter>
-    </ClCompile>
-    <ClCompile Include="$(SolutionDir)\..\src\cpp\common\auth_property_iterator.cc">
+    <ClCompile Include="$(SolutionDir)\..\src\cpp\common\insecure_create_auth_context.cc">
       <Filter>src\cpp\common</Filter>
-    </ClCompile>
-    <ClCompile Include="$(SolutionDir)\..\src\cpp\common\secure_auth_context.cc">
-      <Filter>src\cpp\common</Filter>
-    </ClCompile>
-    <ClCompile Include="$(SolutionDir)\..\src\cpp\common\secure_channel_arguments.cc">
-      <Filter>src\cpp\common</Filter>
-    </ClCompile>
-    <ClCompile Include="$(SolutionDir)\..\src\cpp\common\secure_create_auth_context.cc">
-      <Filter>src\cpp\common</Filter>
-    </ClCompile>
-    <ClCompile Include="$(SolutionDir)\..\src\cpp\server\secure_server_credentials.cc">
-      <Filter>src\cpp\server</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -398,71 +383,62 @@
     <ClInclude Include="$(SolutionDir)\..\src\cpp\server\thread_pool_interface.h">
       <Filter>src\cpp\server</Filter>
     </ClInclude>
-    <ClInclude Include="$(SolutionDir)\..\src\cpp\client\secure_credentials.h">
-      <Filter>src\cpp\client</Filter>
-    </ClInclude>
-    <ClInclude Include="$(SolutionDir)\..\src\cpp\common\secure_auth_context.h">
-      <Filter>src\cpp\common</Filter>
-    </ClInclude>
-    <ClInclude Include="$(SolutionDir)\..\src\cpp\server\secure_server_credentials.h">
-      <Filter>src\cpp\server</Filter>
-    </ClInclude>
   </ItemGroup>
 
   <ItemGroup>
     <Filter Include="include">
-      <UniqueIdentifier>{82445414-24cd-8198-1fe1-4267c3f3df00}</UniqueIdentifier>
+      <UniqueIdentifier>{8cfca5ff-39e5-8c6c-e255-acf9e5bfbc20}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\grpc">
-      <UniqueIdentifier>{16946104-53ac-ac76-68b9-f9ec77ea6fae}</UniqueIdentifier>
+      <UniqueIdentifier>{946ac47c-45cd-fce0-5dc5-50e3b4c9b999}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\grpc++">
-      <UniqueIdentifier>{784a0281-f547-aeb0-9f55-b26b7de9c769}</UniqueIdentifier>
+      <UniqueIdentifier>{15d1753e-efe3-f13f-2d9b-c4278e129698}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\grpc++\generic">
-      <UniqueIdentifier>{51dae921-3aa2-1976-2ee4-c5615de1af54}</UniqueIdentifier>
+      <UniqueIdentifier>{ca814e10-e654-54f8-5766-ec0a67795a1d}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\grpc++\impl">
-      <UniqueIdentifier>{0da8cd95-314f-da1b-5ce7-7791a5be1f1a}</UniqueIdentifier>
+      <UniqueIdentifier>{4d1e430c-bfc2-7039-7e14-9c4179a87156}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\grpc++\impl\codegen">
-      <UniqueIdentifier>{a3e7f28b-a7c7-7364-d402-edb1bfa414a4}</UniqueIdentifier>
+      <UniqueIdentifier>{281b182a-26c9-4b4d-a09b-67a59d064857}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\grpc++\impl\codegen\security">
-      <UniqueIdentifier>{20cbcf00-994a-300a-5184-bda96c6f45e4}</UniqueIdentifier>
+      <UniqueIdentifier>{8d630438-c6cc-ff11-6bdb-47fd45e10343}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\grpc++\security">
-      <UniqueIdentifier>{a80eb32b-1be9-1187-5f40-30d92accecc8}</UniqueIdentifier>
+      <UniqueIdentifier>{832eed62-ae71-b799-5e8a-463fe4d7ff99}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\grpc++\support">
-      <UniqueIdentifier>{a5c10dae-f715-2a30-1066-d22f8bc94cb2}</UniqueIdentifier>
+      <UniqueIdentifier>{f8a25962-5b0a-87f8-02e0-0440ef37cc70}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\grpc\impl">
-      <UniqueIdentifier>{48c3b0ae-c00f-fa20-6965-b73da65d71cb}</UniqueIdentifier>
+      <UniqueIdentifier>{1078cf6e-6ab2-7f68-638f-a735027a4147}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\grpc\impl\codegen">
-      <UniqueIdentifier>{dc8bfccd-341f-26f0-8ee4-47dde62a6dd1}</UniqueIdentifier>
+      <UniqueIdentifier>{69026d6e-4ec7-75a1-c116-b714eb58fb6a}</UniqueIdentifier>
     </Filter>
     <Filter Include="src">
-      <UniqueIdentifier>{328ff211-2886-406e-56f9-18ba1686f363}</UniqueIdentifier>
+      <UniqueIdentifier>{32acb203-54bc-e88c-b370-56ebe1c1ffba}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\cpp">
-      <UniqueIdentifier>{2420a905-e4f1-a5aa-a364-6a112878a39e}</UniqueIdentifier>
+      <UniqueIdentifier>{4ab55e56-afe1-4b6a-afcc-116a6f01ea61}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\cpp\client">
-      <UniqueIdentifier>{7febf32a-d7a6-76fa-9e17-f189f591c062}</UniqueIdentifier>
+      <UniqueIdentifier>{aebaaceb-241b-024a-01a5-a4e83ddf73e3}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\cpp\codegen">
-      <UniqueIdentifier>{3c3e27f4-d3d9-3c42-5204-08b5e839f2de}</UniqueIdentifier>
+      <UniqueIdentifier>{c99d749d-bd46-fb54-6e2f-5e911db3333c}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\cpp\common">
-      <UniqueIdentifier>{2336e396-7e0b-8bf9-3b09-adc6ad1f0e5b}</UniqueIdentifier>
+      <UniqueIdentifier>{025a4e59-784a-2b99-2a03-b130b8dd2543}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\cpp\server">
-      <UniqueIdentifier>{321b0980-74ad-e8ca-f23b-deffa5d6bb8f}</UniqueIdentifier>
+      <UniqueIdentifier>{fecec533-0ccf-ab33-2a40-865cbfb66085}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\cpp\util">
-      <UniqueIdentifier>{f842537a-2bf1-1ec3-b495-7d62c64a1c06}</UniqueIdentifier>
+      <UniqueIdentifier>{3692e360-ead5-8162-ac62-c4e5392fb4ce}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

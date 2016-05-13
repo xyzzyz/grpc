@@ -84,10 +84,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <TargetName>grpc++</TargetName>
+    <TargetName>grpc++_lite</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
-    <TargetName>grpc++</TargetName>
+    <TargetName>grpc++_lite</TargetName>
   </PropertyGroup>
     <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">
     <ClCompile>

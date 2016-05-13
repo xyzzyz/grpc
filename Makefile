@@ -728,7 +728,7 @@ PC_LIBS_GRPCXX = -lprotobuf
 endif
 else
 ifeq ($(HAS_EMBEDDED_PROTOBUF),true)
-PROTOBUF_DEP = $(LIBDIR)/$(CONFIG)/protobuf/libprotobuf.a
+PROTOBUF_DEP = $(LIBDIR)/$(CONFIG)/protobuf/all
 CPPFLAGS := -Ithird_party/protobuf/src $(CPPFLAGS)
 LDFLAGS := -L$(LIBDIR)/$(CONFIG)/protobuf $(LDFLAGS)
 PROTOC = $(BINDIR)/$(CONFIG)/protobuf/protoc
@@ -738,14 +738,17 @@ endif
 endif
 
 LIBS_PROTOBUF = protobuf
+LIBS_PROTOBUF_LITE = protobuf-lite
 LIBS_PROTOC = protoc protobuf
 
 HOST_LDLIBS_PROTOC += $(addprefix -l, $(LIBS_PROTOC))
 
 ifeq ($(PROTOBUF_PKG_CONFIG),true)
 LDLIBS_PROTOBUF += $(shell $(PKG_CONFIG) --libs-only-l protobuf)
+LDLIBS_PROTOBUF_LITE += $(shell $(PKG_CONFIG) --libs-only-l protobuf-lite)
 else
 LDLIBS_PROTOBUF += $(addprefix -l, $(LIBS_PROTOBUF))
+LDLIBS_PROTOBUF_LITE += $(addprefix -l, $(LIBS_PROTOBUF_LITE))
 endif
 
 # grpc++ .pc file
@@ -1145,15 +1148,18 @@ third_party/protobuf/configure:
 	$(E) "[AUTOGEN] Preparing protobuf"
 	$(Q)(cd third_party/protobuf ; autoreconf -f -i -Wall,no-obsolete)
 
-$(LIBDIR)/$(CONFIG)/protobuf/libprotobuf.a: third_party/protobuf/configure
+third_party/protobuf/build: third_party/protobuf/configure
 	$(E) "[MAKE]    Building protobuf"
 	$(Q)(cd third_party/protobuf ; CC="$(CC)" CXX="$(CXX)" LDFLAGS="$(LDFLAGS_$(CONFIG)) -g $(PROTOBUF_LDFLAGS_EXTRA)" CPPFLAGS="$(PIC_CPPFLAGS) $(CPPFLAGS_$(CONFIG)) -g $(PROTOBUF_CPPFLAGS_EXTRA)" ./configure --disable-shared --enable-static)
 	$(Q)$(MAKE) -C third_party/protobuf clean
 	$(Q)$(MAKE) -C third_party/protobuf
+
+$(LIBDIR)/$(CONFIG)/protobuf/all: third_party/protobuf/build
 	$(Q)mkdir -p $(LIBDIR)/$(CONFIG)/protobuf
 	$(Q)mkdir -p $(BINDIR)/$(CONFIG)/protobuf
-	$(Q)cp third_party/protobuf/src/.libs/libprotoc.a $(LIBDIR)/$(CONFIG)/protobuf
 	$(Q)cp third_party/protobuf/src/.libs/libprotobuf.a $(LIBDIR)/$(CONFIG)/protobuf
+	$(Q)cp third_party/protobuf/src/.libs/libprotobuf-lite.a $(LIBDIR)/$(CONFIG)/protobuf
+	$(Q)cp third_party/protobuf/src/.libs/libprotoc.a $(LIBDIR)/$(CONFIG)/protobuf
 	$(Q)cp third_party/protobuf/src/protoc $(BINDIR)/$(CONFIG)/protobuf
 
 static: static_c static_cxx
@@ -1161,13 +1167,13 @@ static: static_c static_cxx
 static_c: pc_c pc_c_unsecure cache.mk pc_c_zookeeper $(LIBDIR)/$(CONFIG)/libgpr.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgrpc_unsecure.a static_zookeeper_libs
 
 
-static_cxx: pc_cxx pc_cxx_unsecure cache.mk  $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure.a
+static_cxx: pc_cxx pc_cxx_unsecure cache.mk  $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc++_lite.a $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure.a $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite.a
 
 shared: shared_c shared_cxx
 
 shared_c: pc_c pc_c_unsecure cache.mk pc_c_zookeeper $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)gpr$(SHARED_VERSION).$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc$(SHARED_VERSION).$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc_unsecure$(SHARED_VERSION).$(SHARED_EXT) shared_zookeeper_libs
 
-shared_cxx: pc_cxx pc_cxx_unsecure cache.mk $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++$(SHARED_VERSION).$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++_unsecure$(SHARED_VERSION).$(SHARED_EXT)
+shared_cxx: pc_cxx pc_cxx_unsecure cache.mk $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++$(SHARED_VERSION).$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++_lite$(SHARED_VERSION).$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++_unsecure$(SHARED_VERSION).$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT)
 
 shared_csharp: shared_c  $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc_csharp_ext$(SHARED_VERSION).$(SHARED_EXT)
 ifeq ($(HAS_ZOOKEEPER),true)
@@ -1808,8 +1814,12 @@ strip-static_cxx: static_cxx
 ifeq ($(CONFIG),opt)
 	$(E) "[STRIP]   Stripping libgrpc++.a"
 	$(Q) $(STRIP) $(LIBDIR)/$(CONFIG)/libgrpc++.a
+	$(E) "[STRIP]   Stripping libgrpc++_lite.a"
+	$(Q) $(STRIP) $(LIBDIR)/$(CONFIG)/libgrpc++_lite.a
 	$(E) "[STRIP]   Stripping libgrpc++_unsecure.a"
 	$(Q) $(STRIP) $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure.a
+	$(E) "[STRIP]   Stripping libgrpc++_unsecure_lite.a"
+	$(Q) $(STRIP) $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite.a
 endif
 
 strip-shared_c: shared_c
@@ -1830,8 +1840,12 @@ strip-shared_cxx: shared_cxx
 ifeq ($(CONFIG),opt)
 	$(E) "[STRIP]   Stripping $(SHARED_PREFIX)grpc++$(SHARED_VERSION).$(SHARED_EXT)"
 	$(Q) $(STRIP) $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++$(SHARED_VERSION).$(SHARED_EXT)
+	$(E) "[STRIP]   Stripping $(SHARED_PREFIX)grpc++_lite$(SHARED_VERSION).$(SHARED_EXT)"
+	$(Q) $(STRIP) $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++_lite$(SHARED_VERSION).$(SHARED_EXT)
 	$(E) "[STRIP]   Stripping $(SHARED_PREFIX)grpc++_unsecure$(SHARED_VERSION).$(SHARED_EXT)"
 	$(Q) $(STRIP) $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++_unsecure$(SHARED_VERSION).$(SHARED_EXT)
+	$(E) "[STRIP]   Stripping $(SHARED_PREFIX)grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT)"
+	$(Q) $(STRIP) $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT)
 endif
 
 strip-shared_csharp: shared_csharp
@@ -2156,9 +2170,15 @@ install-static_cxx: static_cxx strip-static_cxx install-pkg-config_cxx
 	$(E) "[INSTALL] Installing libgrpc++.a"
 	$(Q) $(INSTALL) -d $(prefix)/lib
 	$(Q) $(INSTALL) $(LIBDIR)/$(CONFIG)/libgrpc++.a $(prefix)/lib/libgrpc++.a
+	$(E) "[INSTALL] Installing libgrpc++_lite.a"
+	$(Q) $(INSTALL) -d $(prefix)/lib
+	$(Q) $(INSTALL) $(LIBDIR)/$(CONFIG)/libgrpc++_lite.a $(prefix)/lib/libgrpc++_lite.a
 	$(E) "[INSTALL] Installing libgrpc++_unsecure.a"
 	$(Q) $(INSTALL) -d $(prefix)/lib
 	$(Q) $(INSTALL) $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure.a $(prefix)/lib/libgrpc++_unsecure.a
+	$(E) "[INSTALL] Installing libgrpc++_unsecure_lite.a"
+	$(Q) $(INSTALL) -d $(prefix)/lib
+	$(Q) $(INSTALL) $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite.a $(prefix)/lib/libgrpc++_unsecure_lite.a
 
 
 
@@ -2218,6 +2238,15 @@ else ifneq ($(SYSTEM),Darwin)
 	$(Q) ln -sf $(SHARED_PREFIX)grpc++$(SHARED_VERSION).$(SHARED_EXT) $(prefix)/lib/libgrpc++.so.0
 	$(Q) ln -sf $(SHARED_PREFIX)grpc++$(SHARED_VERSION).$(SHARED_EXT) $(prefix)/lib/libgrpc++.so
 endif
+	$(E) "[INSTALL] Installing $(SHARED_PREFIX)grpc++_lite$(SHARED_VERSION).$(SHARED_EXT)"
+	$(Q) $(INSTALL) -d $(prefix)/lib
+	$(Q) $(INSTALL) $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++_lite$(SHARED_VERSION).$(SHARED_EXT) $(prefix)/lib/$(SHARED_PREFIX)grpc++_lite$(SHARED_VERSION).$(SHARED_EXT)
+ifeq ($(SYSTEM),MINGW32)
+	$(Q) $(INSTALL) $(LIBDIR)/$(CONFIG)/libgrpc++_lite-imp.a $(prefix)/lib/libgrpc++_lite-imp.a
+else ifneq ($(SYSTEM),Darwin)
+	$(Q) ln -sf $(SHARED_PREFIX)grpc++_lite$(SHARED_VERSION).$(SHARED_EXT) $(prefix)/lib/libgrpc++_lite.so.0
+	$(Q) ln -sf $(SHARED_PREFIX)grpc++_lite$(SHARED_VERSION).$(SHARED_EXT) $(prefix)/lib/libgrpc++_lite.so
+endif
 	$(E) "[INSTALL] Installing $(SHARED_PREFIX)grpc++_unsecure$(SHARED_VERSION).$(SHARED_EXT)"
 	$(Q) $(INSTALL) -d $(prefix)/lib
 	$(Q) $(INSTALL) $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++_unsecure$(SHARED_VERSION).$(SHARED_EXT) $(prefix)/lib/$(SHARED_PREFIX)grpc++_unsecure$(SHARED_VERSION).$(SHARED_EXT)
@@ -2226,6 +2255,15 @@ ifeq ($(SYSTEM),MINGW32)
 else ifneq ($(SYSTEM),Darwin)
 	$(Q) ln -sf $(SHARED_PREFIX)grpc++_unsecure$(SHARED_VERSION).$(SHARED_EXT) $(prefix)/lib/libgrpc++_unsecure.so.0
 	$(Q) ln -sf $(SHARED_PREFIX)grpc++_unsecure$(SHARED_VERSION).$(SHARED_EXT) $(prefix)/lib/libgrpc++_unsecure.so
+endif
+	$(E) "[INSTALL] Installing $(SHARED_PREFIX)grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT)"
+	$(Q) $(INSTALL) -d $(prefix)/lib
+	$(Q) $(INSTALL) $(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT) $(prefix)/lib/$(SHARED_PREFIX)grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT)
+ifeq ($(SYSTEM),MINGW32)
+	$(Q) $(INSTALL) $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite-imp.a $(prefix)/lib/libgrpc++_unsecure_lite-imp.a
+else ifneq ($(SYSTEM),Darwin)
+	$(Q) ln -sf $(SHARED_PREFIX)grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT) $(prefix)/lib/libgrpc++_unsecure_lite.so.0
+	$(Q) ln -sf $(SHARED_PREFIX)grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT) $(prefix)/lib/libgrpc++_unsecure_lite.so
 endif
 ifeq ($(HAS_ZOOKEEPER),true)
 endif
@@ -3150,12 +3188,6 @@ endif
 
 
 LIBGRPC++_SRC = \
-    src/cpp/client/secure_credentials.cc \
-    src/cpp/common/auth_property_iterator.cc \
-    src/cpp/common/secure_auth_context.cc \
-    src/cpp/common/secure_channel_arguments.cc \
-    src/cpp/common/secure_create_auth_context.cc \
-    src/cpp/server/secure_server_credentials.cc \
     src/cpp/client/channel.cc \
     src/cpp/client/client_context.cc \
     src/cpp/client/create_channel.cc \
@@ -3181,6 +3213,12 @@ LIBGRPC++_SRC = \
     src/cpp/util/string_ref.cc \
     src/cpp/util/time.cc \
     src/cpp/codegen/codegen_init.cc \
+    src/cpp/client/secure_credentials.cc \
+    src/cpp/common/auth_property_iterator.cc \
+    src/cpp/common/secure_auth_context.cc \
+    src/cpp/common/secure_channel_arguments.cc \
+    src/cpp/common/secure_create_auth_context.cc \
+    src/cpp/server/secure_server_credentials.cc \
 
 PUBLIC_HEADERS_CXX += \
     include/grpc++/alarm.h \
@@ -3343,6 +3381,200 @@ endif
 endif
 
 
+LIBGRPC++_LITE_SRC = \
+    src/cpp/client/channel.cc \
+    src/cpp/client/client_context.cc \
+    src/cpp/client/create_channel.cc \
+    src/cpp/client/create_channel_internal.cc \
+    src/cpp/client/credentials.cc \
+    src/cpp/client/generic_stub.cc \
+    src/cpp/client/insecure_credentials.cc \
+    src/cpp/common/channel_arguments.cc \
+    src/cpp/common/completion_queue.cc \
+    src/cpp/common/core_codegen.cc \
+    src/cpp/common/rpc_method.cc \
+    src/cpp/server/async_generic_service.cc \
+    src/cpp/server/create_default_thread_pool.cc \
+    src/cpp/server/dynamic_thread_pool.cc \
+    src/cpp/server/insecure_server_credentials.cc \
+    src/cpp/server/server.cc \
+    src/cpp/server/server_builder.cc \
+    src/cpp/server/server_context.cc \
+    src/cpp/server/server_credentials.cc \
+    src/cpp/util/byte_buffer.cc \
+    src/cpp/util/slice.cc \
+    src/cpp/util/status.cc \
+    src/cpp/util/string_ref.cc \
+    src/cpp/util/time.cc \
+    src/cpp/codegen/codegen_init.cc \
+    src/cpp/client/secure_credentials.cc \
+    src/cpp/common/auth_property_iterator.cc \
+    src/cpp/common/secure_auth_context.cc \
+    src/cpp/common/secure_channel_arguments.cc \
+    src/cpp/common/secure_create_auth_context.cc \
+    src/cpp/server/secure_server_credentials.cc \
+
+PUBLIC_HEADERS_CXX += \
+    include/grpc++/alarm.h \
+    include/grpc++/channel.h \
+    include/grpc++/client_context.h \
+    include/grpc++/completion_queue.h \
+    include/grpc++/create_channel.h \
+    include/grpc++/generic/async_generic_service.h \
+    include/grpc++/generic/generic_stub.h \
+    include/grpc++/grpc++.h \
+    include/grpc++/impl/call.h \
+    include/grpc++/impl/client_unary_call.h \
+    include/grpc++/impl/grpc_library.h \
+    include/grpc++/impl/method_handler_impl.h \
+    include/grpc++/impl/proto_utils.h \
+    include/grpc++/impl/rpc_method.h \
+    include/grpc++/impl/rpc_service_method.h \
+    include/grpc++/impl/serialization_traits.h \
+    include/grpc++/impl/server_builder_option.h \
+    include/grpc++/impl/service_type.h \
+    include/grpc++/impl/sync.h \
+    include/grpc++/impl/sync_cxx11.h \
+    include/grpc++/impl/sync_no_cxx11.h \
+    include/grpc++/impl/thd.h \
+    include/grpc++/impl/thd_cxx11.h \
+    include/grpc++/impl/thd_no_cxx11.h \
+    include/grpc++/security/auth_context.h \
+    include/grpc++/security/auth_metadata_processor.h \
+    include/grpc++/security/credentials.h \
+    include/grpc++/security/server_credentials.h \
+    include/grpc++/server.h \
+    include/grpc++/server_builder.h \
+    include/grpc++/server_context.h \
+    include/grpc++/support/async_stream.h \
+    include/grpc++/support/async_unary_call.h \
+    include/grpc++/support/byte_buffer.h \
+    include/grpc++/support/channel_arguments.h \
+    include/grpc++/support/slice.h \
+    include/grpc++/support/status.h \
+    include/grpc++/support/status_code_enum.h \
+    include/grpc++/support/string_ref.h \
+    include/grpc++/support/stub_options.h \
+    include/grpc++/support/sync_stream.h \
+    include/grpc++/support/time.h \
+    include/grpc++/impl/codegen/async_stream.h \
+    include/grpc++/impl/codegen/async_unary_call.h \
+    include/grpc++/impl/codegen/call.h \
+    include/grpc++/impl/codegen/call_hook.h \
+    include/grpc++/impl/codegen/channel_interface.h \
+    include/grpc++/impl/codegen/client_context.h \
+    include/grpc++/impl/codegen/client_unary_call.h \
+    include/grpc++/impl/codegen/completion_queue.h \
+    include/grpc++/impl/codegen/completion_queue_tag.h \
+    include/grpc++/impl/codegen/core_codegen_interface.h \
+    include/grpc++/impl/codegen/create_auth_context.h \
+    include/grpc++/impl/codegen/grpc_library.h \
+    include/grpc++/impl/codegen/method_handler_impl.h \
+    include/grpc++/impl/codegen/proto_utils.h \
+    include/grpc++/impl/codegen/rpc_method.h \
+    include/grpc++/impl/codegen/rpc_service_method.h \
+    include/grpc++/impl/codegen/security/auth_context.h \
+    include/grpc++/impl/codegen/serialization_traits.h \
+    include/grpc++/impl/codegen/server_context.h \
+    include/grpc++/impl/codegen/server_interface.h \
+    include/grpc++/impl/codegen/service_type.h \
+    include/grpc++/impl/codegen/status.h \
+    include/grpc++/impl/codegen/status_code_enum.h \
+    include/grpc++/impl/codegen/string_ref.h \
+    include/grpc++/impl/codegen/stub_options.h \
+    include/grpc++/impl/codegen/sync.h \
+    include/grpc++/impl/codegen/sync_cxx11.h \
+    include/grpc++/impl/codegen/sync_no_cxx11.h \
+    include/grpc++/impl/codegen/sync_stream.h \
+    include/grpc++/impl/codegen/time.h \
+    include/grpc/impl/codegen/byte_buffer.h \
+    include/grpc/impl/codegen/compression_types.h \
+    include/grpc/impl/codegen/connectivity_state.h \
+    include/grpc/impl/codegen/grpc_types.h \
+    include/grpc/impl/codegen/propagation_bits.h \
+    include/grpc/impl/codegen/status.h \
+    include/grpc/impl/codegen/alloc.h \
+    include/grpc/impl/codegen/atm.h \
+    include/grpc/impl/codegen/atm_gcc_atomic.h \
+    include/grpc/impl/codegen/atm_gcc_sync.h \
+    include/grpc/impl/codegen/atm_win32.h \
+    include/grpc/impl/codegen/log.h \
+    include/grpc/impl/codegen/port_platform.h \
+    include/grpc/impl/codegen/slice.h \
+    include/grpc/impl/codegen/slice_buffer.h \
+    include/grpc/impl/codegen/sync.h \
+    include/grpc/impl/codegen/sync_generic.h \
+    include/grpc/impl/codegen/sync_posix.h \
+    include/grpc/impl/codegen/sync_win32.h \
+    include/grpc/impl/codegen/time.h \
+    include/grpc++/impl/codegen/config.h \
+    include/grpc++/impl/codegen/config_protobuf.h \
+    include/grpc++/support/config.h \
+    include/grpc++/support/config_protobuf.h \
+
+LIBGRPC++_LITE_OBJS = $(addprefix $(OBJDIR)/$(CONFIG)/, $(addsuffix .o, $(basename $(LIBGRPC++_LITE_SRC))))
+
+
+ifeq ($(NO_SECURE),true)
+
+# You can't build secure libraries if you don't have OpenSSL.
+
+$(LIBDIR)/$(CONFIG)/libgrpc++_lite.a: openssl_dep_error
+
+$(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++_lite$(SHARED_VERSION).$(SHARED_EXT): openssl_dep_error
+
+else
+
+ifeq ($(NO_PROTOBUF),true)
+
+# You can't build a C++ library if you don't have protobuf - a bit overreached, but still okay.
+
+$(LIBDIR)/$(CONFIG)/libgrpc++_lite.a: protobuf_dep_error
+
+$(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++_lite$(SHARED_VERSION).$(SHARED_EXT): protobuf_dep_error
+
+else
+
+$(LIBDIR)/$(CONFIG)/libgrpc++_lite.a: $(ZLIB_DEP) $(OPENSSL_DEP) $(PROTOBUF_DEP) $(LIBGRPC++_LITE_OBJS)  $(LIBGPR_OBJS)  $(ZLIB_MERGE_OBJS) 
+	$(E) "[AR]      Creating $@"
+	$(Q) mkdir -p `dirname $@`
+	$(Q) rm -f $(LIBDIR)/$(CONFIG)/libgrpc++_lite.a
+	$(Q) $(AR) $(LIBDIR)/$(CONFIG)/libgrpc++_lite.a $(LIBGRPC++_LITE_OBJS)  $(LIBGPR_OBJS)  $(ZLIB_MERGE_OBJS) 
+ifeq ($(SYSTEM),Darwin)
+	$(Q) ranlib -no_warning_for_no_symbols $(LIBDIR)/$(CONFIG)/libgrpc++_lite.a
+endif
+
+
+
+ifeq ($(SYSTEM),MINGW32)
+$(LIBDIR)/$(CONFIG)/grpc++_lite$(SHARED_VERSION).$(SHARED_EXT): $(LIBGRPC++_LITE_OBJS)  $(ZLIB_DEP) $(PROTOBUF_DEP) $(LIBDIR)/$(CONFIG)/grpc.$(SHARED_EXT) $(OPENSSL_DEP)
+	$(E) "[LD]      Linking $@"
+	$(Q) mkdir -p `dirname $@`
+	$(Q) $(LDXX) $(LDFLAGS) -L$(LIBDIR)/$(CONFIG) -shared grpc++_lite.def -Wl,--output-def=$(LIBDIR)/$(CONFIG)/grpc++_lite$(SHARED_VERSION).def -Wl,--out-implib=$(LIBDIR)/$(CONFIG)/libgrpc++_lite$(SHARED_VERSION)-dll.a -o $(LIBDIR)/$(CONFIG)/grpc++_lite$(SHARED_VERSION).$(SHARED_EXT) $(LIBGRPC++_LITE_OBJS) $(LDLIBS) $(ZLIB_MERGE_LIBS) $(LDLIBSXX) $(LDLIBS_PROTOBUF_LITE) -lgrpc-imp
+else
+$(LIBDIR)/$(CONFIG)/libgrpc++_lite$(SHARED_VERSION).$(SHARED_EXT): $(LIBGRPC++_LITE_OBJS)  $(ZLIB_DEP) $(PROTOBUF_DEP) $(LIBDIR)/$(CONFIG)/libgrpc.$(SHARED_EXT) $(OPENSSL_DEP)
+	$(E) "[LD]      Linking $@"
+	$(Q) mkdir -p `dirname $@`
+ifeq ($(SYSTEM),Darwin)
+	$(Q) $(LDXX) $(LDFLAGS) -L$(LIBDIR)/$(CONFIG) -install_name $(SHARED_PREFIX)grpc++_lite$(SHARED_VERSION).$(SHARED_EXT) -dynamiclib -o $(LIBDIR)/$(CONFIG)/libgrpc++_lite$(SHARED_VERSION).$(SHARED_EXT) $(LIBGRPC++_LITE_OBJS) $(LDLIBS) $(ZLIB_MERGE_LIBS) $(LDLIBSXX) $(LDLIBS_PROTOBUF_LITE) -lgrpc
+else
+	$(Q) $(LDXX) $(LDFLAGS) -L$(LIBDIR)/$(CONFIG) -shared -Wl,-soname,libgrpc++_lite.so.0 -o $(LIBDIR)/$(CONFIG)/libgrpc++_lite$(SHARED_VERSION).$(SHARED_EXT) $(LIBGRPC++_LITE_OBJS) $(LDLIBS) $(ZLIB_MERGE_LIBS) $(LDLIBSXX) $(LDLIBS_PROTOBUF_LITE) -lgrpc
+	$(Q) ln -sf $(SHARED_PREFIX)grpc++_lite$(SHARED_VERSION).$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/libgrpc++_lite$(SHARED_VERSION).so.0
+	$(Q) ln -sf $(SHARED_PREFIX)grpc++_lite$(SHARED_VERSION).$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/libgrpc++_lite$(SHARED_VERSION).so
+endif
+endif
+
+endif
+
+endif
+
+ifneq ($(NO_SECURE),true)
+ifneq ($(NO_DEPS),true)
+-include $(LIBGRPC++_LITE_OBJS:.o=.dep)
+endif
+endif
+
+
 LIBGRPC++_TEST_CONFIG_SRC = \
     test/cpp/util/test_config.cc \
 
@@ -3458,7 +3690,6 @@ $(OBJDIR)/$(CONFIG)/test/cpp/util/test_credentials_provider.o: $(GENDIR)/src/pro
 
 
 LIBGRPC++_UNSECURE_SRC = \
-    src/cpp/common/insecure_create_auth_context.cc \
     src/cpp/client/channel.cc \
     src/cpp/client/client_context.cc \
     src/cpp/client/create_channel.cc \
@@ -3484,6 +3715,7 @@ LIBGRPC++_UNSECURE_SRC = \
     src/cpp/util/string_ref.cc \
     src/cpp/util/time.cc \
     src/cpp/codegen/codegen_init.cc \
+    src/cpp/common/insecure_create_auth_context.cc \
 
 PUBLIC_HEADERS_CXX += \
     include/grpc++/alarm.h \
@@ -3629,6 +3861,181 @@ endif
 
 ifneq ($(NO_DEPS),true)
 -include $(LIBGRPC++_UNSECURE_OBJS:.o=.dep)
+endif
+
+
+LIBGRPC++_UNSECURE_LITE_SRC = \
+    src/cpp/client/channel.cc \
+    src/cpp/client/client_context.cc \
+    src/cpp/client/create_channel.cc \
+    src/cpp/client/create_channel_internal.cc \
+    src/cpp/client/credentials.cc \
+    src/cpp/client/generic_stub.cc \
+    src/cpp/client/insecure_credentials.cc \
+    src/cpp/common/channel_arguments.cc \
+    src/cpp/common/completion_queue.cc \
+    src/cpp/common/core_codegen.cc \
+    src/cpp/common/rpc_method.cc \
+    src/cpp/server/async_generic_service.cc \
+    src/cpp/server/create_default_thread_pool.cc \
+    src/cpp/server/dynamic_thread_pool.cc \
+    src/cpp/server/insecure_server_credentials.cc \
+    src/cpp/server/server.cc \
+    src/cpp/server/server_builder.cc \
+    src/cpp/server/server_context.cc \
+    src/cpp/server/server_credentials.cc \
+    src/cpp/util/byte_buffer.cc \
+    src/cpp/util/slice.cc \
+    src/cpp/util/status.cc \
+    src/cpp/util/string_ref.cc \
+    src/cpp/util/time.cc \
+    src/cpp/codegen/codegen_init.cc \
+    src/cpp/common/insecure_create_auth_context.cc \
+
+PUBLIC_HEADERS_CXX += \
+    include/grpc++/alarm.h \
+    include/grpc++/channel.h \
+    include/grpc++/client_context.h \
+    include/grpc++/completion_queue.h \
+    include/grpc++/create_channel.h \
+    include/grpc++/generic/async_generic_service.h \
+    include/grpc++/generic/generic_stub.h \
+    include/grpc++/grpc++.h \
+    include/grpc++/impl/call.h \
+    include/grpc++/impl/client_unary_call.h \
+    include/grpc++/impl/grpc_library.h \
+    include/grpc++/impl/method_handler_impl.h \
+    include/grpc++/impl/proto_utils.h \
+    include/grpc++/impl/rpc_method.h \
+    include/grpc++/impl/rpc_service_method.h \
+    include/grpc++/impl/serialization_traits.h \
+    include/grpc++/impl/server_builder_option.h \
+    include/grpc++/impl/service_type.h \
+    include/grpc++/impl/sync.h \
+    include/grpc++/impl/sync_cxx11.h \
+    include/grpc++/impl/sync_no_cxx11.h \
+    include/grpc++/impl/thd.h \
+    include/grpc++/impl/thd_cxx11.h \
+    include/grpc++/impl/thd_no_cxx11.h \
+    include/grpc++/security/auth_context.h \
+    include/grpc++/security/auth_metadata_processor.h \
+    include/grpc++/security/credentials.h \
+    include/grpc++/security/server_credentials.h \
+    include/grpc++/server.h \
+    include/grpc++/server_builder.h \
+    include/grpc++/server_context.h \
+    include/grpc++/support/async_stream.h \
+    include/grpc++/support/async_unary_call.h \
+    include/grpc++/support/byte_buffer.h \
+    include/grpc++/support/channel_arguments.h \
+    include/grpc++/support/slice.h \
+    include/grpc++/support/status.h \
+    include/grpc++/support/status_code_enum.h \
+    include/grpc++/support/string_ref.h \
+    include/grpc++/support/stub_options.h \
+    include/grpc++/support/sync_stream.h \
+    include/grpc++/support/time.h \
+    include/grpc++/impl/codegen/async_stream.h \
+    include/grpc++/impl/codegen/async_unary_call.h \
+    include/grpc++/impl/codegen/call.h \
+    include/grpc++/impl/codegen/call_hook.h \
+    include/grpc++/impl/codegen/channel_interface.h \
+    include/grpc++/impl/codegen/client_context.h \
+    include/grpc++/impl/codegen/client_unary_call.h \
+    include/grpc++/impl/codegen/completion_queue.h \
+    include/grpc++/impl/codegen/completion_queue_tag.h \
+    include/grpc++/impl/codegen/core_codegen_interface.h \
+    include/grpc++/impl/codegen/create_auth_context.h \
+    include/grpc++/impl/codegen/grpc_library.h \
+    include/grpc++/impl/codegen/method_handler_impl.h \
+    include/grpc++/impl/codegen/proto_utils.h \
+    include/grpc++/impl/codegen/rpc_method.h \
+    include/grpc++/impl/codegen/rpc_service_method.h \
+    include/grpc++/impl/codegen/security/auth_context.h \
+    include/grpc++/impl/codegen/serialization_traits.h \
+    include/grpc++/impl/codegen/server_context.h \
+    include/grpc++/impl/codegen/server_interface.h \
+    include/grpc++/impl/codegen/service_type.h \
+    include/grpc++/impl/codegen/status.h \
+    include/grpc++/impl/codegen/status_code_enum.h \
+    include/grpc++/impl/codegen/string_ref.h \
+    include/grpc++/impl/codegen/stub_options.h \
+    include/grpc++/impl/codegen/sync.h \
+    include/grpc++/impl/codegen/sync_cxx11.h \
+    include/grpc++/impl/codegen/sync_no_cxx11.h \
+    include/grpc++/impl/codegen/sync_stream.h \
+    include/grpc++/impl/codegen/time.h \
+    include/grpc/impl/codegen/byte_buffer.h \
+    include/grpc/impl/codegen/compression_types.h \
+    include/grpc/impl/codegen/connectivity_state.h \
+    include/grpc/impl/codegen/grpc_types.h \
+    include/grpc/impl/codegen/propagation_bits.h \
+    include/grpc/impl/codegen/status.h \
+    include/grpc/impl/codegen/alloc.h \
+    include/grpc/impl/codegen/atm.h \
+    include/grpc/impl/codegen/atm_gcc_atomic.h \
+    include/grpc/impl/codegen/atm_gcc_sync.h \
+    include/grpc/impl/codegen/atm_win32.h \
+    include/grpc/impl/codegen/log.h \
+    include/grpc/impl/codegen/port_platform.h \
+    include/grpc/impl/codegen/slice.h \
+    include/grpc/impl/codegen/slice_buffer.h \
+    include/grpc/impl/codegen/sync.h \
+    include/grpc/impl/codegen/sync_generic.h \
+    include/grpc/impl/codegen/sync_posix.h \
+    include/grpc/impl/codegen/sync_win32.h \
+    include/grpc/impl/codegen/time.h \
+    include/grpc++/impl/codegen/config.h \
+    include/grpc++/impl/codegen/config_protobuf.h \
+    include/grpc++/support/config.h \
+    include/grpc++/support/config_protobuf.h \
+
+LIBGRPC++_UNSECURE_LITE_OBJS = $(addprefix $(OBJDIR)/$(CONFIG)/, $(addsuffix .o, $(basename $(LIBGRPC++_UNSECURE_LITE_SRC))))
+
+
+ifeq ($(NO_PROTOBUF),true)
+
+# You can't build a C++ library if you don't have protobuf - a bit overreached, but still okay.
+
+$(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite.a: protobuf_dep_error
+
+$(LIBDIR)/$(CONFIG)/$(SHARED_PREFIX)grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT): protobuf_dep_error
+
+else
+
+$(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite.a: $(ZLIB_DEP)  $(PROTOBUF_DEP) $(LIBGRPC++_UNSECURE_LITE_OBJS)  $(LIBGPR_OBJS)  $(ZLIB_MERGE_OBJS) 
+	$(E) "[AR]      Creating $@"
+	$(Q) mkdir -p `dirname $@`
+	$(Q) rm -f $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite.a
+	$(Q) $(AR) $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite.a $(LIBGRPC++_UNSECURE_LITE_OBJS)  $(LIBGPR_OBJS)  $(ZLIB_MERGE_OBJS) 
+ifeq ($(SYSTEM),Darwin)
+	$(Q) ranlib -no_warning_for_no_symbols $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite.a
+endif
+
+
+
+ifeq ($(SYSTEM),MINGW32)
+$(LIBDIR)/$(CONFIG)/grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT): $(LIBGRPC++_UNSECURE_LITE_OBJS)  $(ZLIB_DEP) $(PROTOBUF_DEP) $(LIBDIR)/$(CONFIG)/gpr.$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/grpc_unsecure.$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/grpc.$(SHARED_EXT)
+	$(E) "[LD]      Linking $@"
+	$(Q) mkdir -p `dirname $@`
+	$(Q) $(LDXX) $(LDFLAGS) -L$(LIBDIR)/$(CONFIG) -shared grpc++_unsecure_lite.def -Wl,--output-def=$(LIBDIR)/$(CONFIG)/grpc++_unsecure_lite$(SHARED_VERSION).def -Wl,--out-implib=$(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite$(SHARED_VERSION)-dll.a -o $(LIBDIR)/$(CONFIG)/grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT) $(LIBGRPC++_UNSECURE_LITE_OBJS) $(LDLIBS) $(ZLIB_MERGE_LIBS) $(LDLIBSXX) $(LDLIBS_PROTOBUF_LITE) -lgpr-imp -lgrpc_unsecure-imp -lgrpc-imp
+else
+$(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT): $(LIBGRPC++_UNSECURE_LITE_OBJS)  $(ZLIB_DEP) $(PROTOBUF_DEP) $(LIBDIR)/$(CONFIG)/libgpr.$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/libgrpc_unsecure.$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/libgrpc.$(SHARED_EXT)
+	$(E) "[LD]      Linking $@"
+	$(Q) mkdir -p `dirname $@`
+ifeq ($(SYSTEM),Darwin)
+	$(Q) $(LDXX) $(LDFLAGS) -L$(LIBDIR)/$(CONFIG) -install_name $(SHARED_PREFIX)grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT) -dynamiclib -o $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT) $(LIBGRPC++_UNSECURE_LITE_OBJS) $(LDLIBS) $(ZLIB_MERGE_LIBS) $(LDLIBSXX) $(LDLIBS_PROTOBUF_LITE) -lgpr -lgrpc_unsecure -lgrpc
+else
+	$(Q) $(LDXX) $(LDFLAGS) -L$(LIBDIR)/$(CONFIG) -shared -Wl,-soname,libgrpc++_unsecure_lite.so.0 -o $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT) $(LIBGRPC++_UNSECURE_LITE_OBJS) $(LDLIBS) $(ZLIB_MERGE_LIBS) $(LDLIBSXX) $(LDLIBS_PROTOBUF_LITE) -lgpr -lgrpc_unsecure -lgrpc
+	$(Q) ln -sf $(SHARED_PREFIX)grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite$(SHARED_VERSION).so.0
+	$(Q) ln -sf $(SHARED_PREFIX)grpc++_unsecure_lite$(SHARED_VERSION).$(SHARED_EXT) $(LIBDIR)/$(CONFIG)/libgrpc++_unsecure_lite$(SHARED_VERSION).so
+endif
+endif
+
+endif
+
+ifneq ($(NO_DEPS),true)
+-include $(LIBGRPC++_UNSECURE_LITE_OBJS:.o=.dep)
 endif
 
 

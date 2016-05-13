@@ -4286,28 +4286,27 @@
     "deps": [
       "grpc", 
       "grpc++_base", 
-      "grpc++_codegen"
+      "grpc++_codegen", 
+      "grpc++_secure_base"
     ], 
-    "headers": [
-      "src/cpp/client/secure_credentials.h", 
-      "src/cpp/common/core_codegen.h", 
-      "src/cpp/common/secure_auth_context.h", 
-      "src/cpp/server/secure_server_credentials.h"
-    ], 
+    "headers": [], 
     "language": "c++", 
     "name": "grpc++", 
-    "src": [
-      "src/cpp/client/secure_credentials.cc", 
-      "src/cpp/client/secure_credentials.h", 
-      "src/cpp/common/auth_property_iterator.cc", 
-      "src/cpp/common/core_codegen.h", 
-      "src/cpp/common/secure_auth_context.cc", 
-      "src/cpp/common/secure_auth_context.h", 
-      "src/cpp/common/secure_channel_arguments.cc", 
-      "src/cpp/common/secure_create_auth_context.cc", 
-      "src/cpp/server/secure_server_credentials.cc", 
-      "src/cpp/server/secure_server_credentials.h"
+    "src": [], 
+    "third_party": false, 
+    "type": "lib"
+  }, 
+  {
+    "deps": [
+      "grpc", 
+      "grpc++_base", 
+      "grpc++_codegen", 
+      "grpc++_secure_base"
     ], 
+    "headers": [], 
+    "language": "c++", 
+    "name": "grpc++_lite", 
+    "src": [], 
     "third_party": false, 
     "type": "lib"
   }, 
@@ -4372,14 +4371,29 @@
       "grpc", 
       "grpc++_base", 
       "grpc++_codegen", 
+      "grpc++_unsecure_base", 
       "grpc_unsecure"
     ], 
     "headers": [], 
     "language": "c++", 
     "name": "grpc++_unsecure", 
-    "src": [
-      "src/cpp/common/insecure_create_auth_context.cc"
+    "src": [], 
+    "third_party": false, 
+    "type": "lib"
+  }, 
+  {
+    "deps": [
+      "gpr", 
+      "grpc", 
+      "grpc++_base", 
+      "grpc++_codegen", 
+      "grpc++_unsecure_base", 
+      "grpc_unsecure"
     ], 
+    "headers": [], 
+    "language": "c++", 
+    "name": "grpc++_unsecure_lite", 
+    "src": [], 
     "third_party": false, 
     "type": "lib"
   }, 
@@ -6536,6 +6550,42 @@
     "src": [
       "include/grpc++/impl/codegen/config.h", 
       "include/grpc++/impl/codegen/config_protobuf.h"
+    ], 
+    "third_party": false, 
+    "type": "filegroup"
+  }, 
+  {
+    "deps": [], 
+    "headers": [
+      "src/cpp/client/secure_credentials.h", 
+      "src/cpp/common/core_codegen.h", 
+      "src/cpp/common/secure_auth_context.h", 
+      "src/cpp/server/secure_server_credentials.h"
+    ], 
+    "language": "c++", 
+    "name": "grpc++_secure_base", 
+    "src": [
+      "src/cpp/client/secure_credentials.cc", 
+      "src/cpp/client/secure_credentials.h", 
+      "src/cpp/common/auth_property_iterator.cc", 
+      "src/cpp/common/core_codegen.h", 
+      "src/cpp/common/secure_auth_context.cc", 
+      "src/cpp/common/secure_auth_context.h", 
+      "src/cpp/common/secure_channel_arguments.cc", 
+      "src/cpp/common/secure_create_auth_context.cc", 
+      "src/cpp/server/secure_server_credentials.cc", 
+      "src/cpp/server/secure_server_credentials.h"
+    ], 
+    "third_party": false, 
+    "type": "filegroup"
+  }, 
+  {
+    "deps": [], 
+    "headers": [], 
+    "language": "c++", 
+    "name": "grpc++_unsecure_base", 
+    "src": [
+      "src/cpp/common/insecure_create_auth_context.cc"
     ], 
     "third_party": false, 
     "type": "filegroup"

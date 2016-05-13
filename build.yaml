@@ -700,6 +700,24 @@ filegroups:
   public_headers:
   - include/grpc++/impl/codegen/config.h
   - include/grpc++/impl/codegen/config_protobuf.h
+- name: grpc++_secure_base
+  language: c++
+  headers:
+  - src/cpp/client/secure_credentials.h
+  - src/cpp/common/core_codegen.h
+  - src/cpp/common/secure_auth_context.h
+  - src/cpp/server/secure_server_credentials.h
+  src:
+  - src/cpp/client/secure_credentials.cc
+  - src/cpp/common/auth_property_iterator.cc
+  - src/cpp/common/secure_auth_context.cc
+  - src/cpp/common/secure_channel_arguments.cc
+  - src/cpp/common/secure_create_auth_context.cc
+  - src/cpp/server/secure_server_credentials.cc
+- name: grpc++_unsecure_base
+  language: c++
+  src:
+  - src/cpp/common/insecure_create_auth_context.cc
 libs:
 - name: gpr
   build: all
@@ -862,18 +880,6 @@ libs:
 - name: grpc++
   build: all
   language: c++
-  headers:
-  - src/cpp/client/secure_credentials.h
-  - src/cpp/common/core_codegen.h
-  - src/cpp/common/secure_auth_context.h
-  - src/cpp/server/secure_server_credentials.h
-  src:
-  - src/cpp/client/secure_credentials.cc
-  - src/cpp/common/auth_property_iterator.cc
-  - src/cpp/common/secure_auth_context.cc
-  - src/cpp/common/secure_channel_arguments.cc
-  - src/cpp/common/secure_create_auth_context.cc
-  - src/cpp/server/secure_server_credentials.cc
   deps:
   - grpc
   baselib: true
@@ -881,6 +887,21 @@ libs:
   filegroups:
   - grpc++_base
   - grpc++_codegen
+  - grpc++_secure_base
+  secure: check
+  vs_project_guid: '{C187A093-A0FE-489D-A40A-6E33DE0F9FEB}'
+- name: grpc++_lite
+  build: all
+  language: c++
+  deps:
+  - grpc
+  baselib: true
+  dll: true
+  filegroups:
+  - grpc++_base
+  - grpc++_codegen
+  - grpc++_secure_base
+  protobuf: lite
   secure: check
   vs_project_guid: '{C187A093-A0FE-489D-A40A-6E33DE0F9FEB}'
 - name: grpc++_test_config
@@ -918,8 +939,6 @@ libs:
 - name: grpc++_unsecure
   build: all
   language: c++
-  src:
-  - src/cpp/common/insecure_create_auth_context.cc
   deps:
   - gpr
   - grpc_unsecure
@@ -928,6 +947,22 @@ libs:
   filegroups:
   - grpc++_base
   - grpc++_codegen
+  - grpc++_unsecure_base
+  secure: false
+  vs_project_guid: '{6EE56155-DF7C-4F6E-BFC4-F6F776BEB211}'
+- name: grpc++_unsecure_lite
+  build: all
+  language: c++
+  deps:
+  - gpr
+  - grpc_unsecure
+  baselib: true
+  dll: true
+  filegroups:
+  - grpc++_base
+  - grpc++_codegen
+  - grpc++_unsecure_base
+  protobuf: lite
   secure: false
   vs_project_guid: '{6EE56155-DF7C-4F6E-BFC4-F6F776BEB211}'
 - name: grpc_plugin_support
